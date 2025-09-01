@@ -1,0 +1,27 @@
+{
+  "name": "uas-server",
+  "version": "1.0.0",
+  "description": "This repo tracks the server-side development of UAS",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saadat7s/uas-server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/saadat7s/uas-server/issues"
+  },
+  "homepage": "https://github.com/saadat7s/uas-server#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
