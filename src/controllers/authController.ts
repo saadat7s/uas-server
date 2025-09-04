@@ -5,9 +5,12 @@ import { registerUserSchema, loginSchema, RegisterUserRequest, LoginRequest } fr
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('RegisterUser: Received registration request', { body: req.body });
+
     // Validate request body
     const { error, value } = registerUserSchema.validate(req.body);
     if (error) {
+      console.warn('RegisterUser: Validation error', error.details.map(detail => detail.message));
       res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -21,6 +24,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     // Check if user already exists
     const existingUser = await User.findOne({ email: userData.email.toLowerCase() });
     if (existingUser) {
+      console.warn('RegisterUser: User with this email already exists', { email: userData.email });
       res.status(409).json({
         success: false,
         message: 'User with this email already exists'
@@ -36,19 +40,11 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     });
 
     await newUser.save();
+    console.log('RegisterUser: New user registered', { userId: newUser._id, email: newUser.email });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: newUser._id, 
-        email: newUser.email, 
-        role: newUser.role 
-      },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
+    // Do NOT generate or return a JWT token on registration.
+    // The user should log in after registration to receive a token.
 
-    // Return success response
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -61,13 +57,12 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
           isEmailVerified: newUser.isEmailVerified,
           isPhoneVerified: newUser.isPhoneVerified,
           createdAt: newUser.createdAt
-        },
-        token
+        }
       }
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('RegisterUser: Registration error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error during registration'
@@ -75,11 +70,17 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+// The token should only be generated after verifying the user's credentials (email and password).
+// This allows the client to receive a token only after successful authentication.
+
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('LoginUser: Received login request', { body: req.body });
+
     // Validate request body
     const { error, value } = loginSchema.validate(req.body);
     if (error) {
+      console.warn('LoginUser: Validation error', error.details.map(detail => detail.message));
       res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -93,6 +94,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     // Find user by email
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
+      console.warn('LoginUser: User not found for email', { email });
       res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -103,6 +105,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     // Check password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      console.warn('LoginUser: Invalid password for user', { email });
       res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -110,7 +113,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate JWT token
+    // Generate JWT token after successful authentication
     const token = jwt.sign(
       { 
         userId: user._id, 
@@ -121,7 +124,9 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: '7d' }
     );
 
-    // Return success response
+    console.log('LoginUser: User logged in successfully', { userId: user._id, email: user.email });
+
+    // Return success response with token
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -140,7 +145,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('LoginUser: Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error during login'
@@ -152,8 +157,10 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
   try {
     // This will be implemented with middleware to extract user from JWT
     const userId = (req as any).user?.userId;
+    console.log('GetCurrentUser: Fetching current user', { userId });
     
     if (!userId) {
+      console.warn('GetCurrentUser: Unauthorized access attempt');
       res.status(401).json({
         success: false,
         message: 'Unauthorized'
@@ -163,6 +170,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 
     const user = await User.findById(userId).select('-password');
     if (!user) {
+      console.warn('GetCurrentUser: User not found', { userId });
       res.status(404).json({
         success: false,
         message: 'User not found'
@@ -170,13 +178,15 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    console.log('GetCurrentUser: User found', { userId: user._id });
+
     res.status(200).json({
       success: true,
       data: { user }
     });
 
   } catch (error) {
-    console.error('Get current user error:', error);
+    console.error('GetCurrentUser: Get current user error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -187,8 +197,10 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
 export const getUsersByRole = async (req: Request, res: Response): Promise<void> => {
   try {
     const { role } = req.params;
+    console.log('GetUsersByRole: Fetching users by role', { role });
     
     if (!Object.values(UserRole).includes(role as UserRole)) {
+      console.warn('GetUsersByRole: Invalid role specified', { role });
       res.status(400).json({
         success: false,
         message: 'Invalid role specified'
@@ -198,13 +210,15 @@ export const getUsersByRole = async (req: Request, res: Response): Promise<void>
 
     const users = await User.find({ role }).select('-password').sort({ createdAt: -1 });
 
+    console.log('GetUsersByRole: Users fetched', { role, count: users.length });
+
     res.status(200).json({
       success: true,
       data: { users }
     });
 
   } catch (error) {
-    console.error('Get users by role error:', error);
+    console.error('GetUsersByRole: Get users by role error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
