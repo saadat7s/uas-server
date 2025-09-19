@@ -225,3 +225,29 @@ export const getUsersByRole = async (req: Request, res: Response): Promise<void>
     });
   }
 };
+
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    console.log('LogoutUser: User logging out', { userId });
+
+    // In a JWT-based system, logout is typically handled client-side
+    // by removing the token. However, we can log this event for security purposes.
+    
+    if (userId) {
+      console.log('LogoutUser: User logged out successfully', { userId });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (error) {
+    console.error('LogoutUser: Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during logout'
+    });
+  }
+};

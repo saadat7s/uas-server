@@ -3,7 +3,8 @@ import {
   registerUser, 
   loginUser, 
   getCurrentUser, 
-  getUsersByRole 
+  getUsersByRole,
+  logoutUser 
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -16,5 +17,6 @@ router.post('/login', loginUser);
 // Protected routes
 router.get('/me', authenticateToken, getCurrentUser);
 router.get('/users/:role', authenticateToken, getUsersByRole);
+router.post('/logout', authenticateToken, logoutUser);
 
 export default router;
