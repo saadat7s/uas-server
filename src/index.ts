@@ -8,6 +8,7 @@ import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
 import applicationRoutes from './routes/application';
 
+
 dotenv.config();
 
 const app = express();
@@ -44,6 +45,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/application', applicationRoutes);
+
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

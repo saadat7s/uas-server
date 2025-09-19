@@ -20,3 +20,4 @@ router.get('/users/:role', authenticateToken, getUsersByRole);
 router.post('/logout', authenticateToken, logoutUser);
 
 export default router;
+

@@ -231,7 +231,9 @@ export const logoutUser = async (req: Request, res: Response): Promise<void> => 
     const userId = (req as any).user?.userId;
     console.log('LogoutUser: User logging out', { userId });
 
-
+    // In a JWT-based system, logout is typically handled client-side
+    // by removing the token. However, we can log this event for security purposes.
+    
     if (userId) {
       console.log('LogoutUser: User logged out successfully', { userId });
     }
